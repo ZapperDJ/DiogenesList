@@ -7,11 +7,12 @@ It's purpose is to create single page HTML+Javascript browsable lists of the con
 ## Usage
 The program only takes two arguments, the directory to be indexed and the output file name without the extension, so:
 
- diogeneslist.py /home/user filelist
+ *diogeneslist.py /home/user filelist*
  
 Will index the contents of /home/user and save them to filelist.html on the current directory. Simple as that
 
 
 ## License
 The diogeneslist.py file is licensed under GPLv2
+
 The template.html file is taken directly from Snap2HTML an thus is licensed as freeware
