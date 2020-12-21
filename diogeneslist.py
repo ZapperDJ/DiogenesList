@@ -78,15 +78,17 @@ def generateDirArray(dirToScan):
     #   "SUBDIRECTORY_ID*SUBDIRECTORY_ID*SUBDIRECTORY_ID*...",
     #   ];
 
+    list_data = []
     for d in range(len(allDirArray)):
-        dirData=dirData+"dirs["+str(d)+"] = [\n"
+        list_data.append("dirs[" + str(d) + "] = [\n")
         for g in range(len(allDirArray[d])):
             if type(allDirArray[d][g]) == int:
-                dirData=dirData+str(allDirArray[d][g])+",\n"
+                list_data.append(str(allDirArray[d][g])+",\n")
             else:
-                dirData=dirData+'"'+allDirArray[d][g]+'",\n'
-        dirData=dirData+"];\n"
-        dirData=dirData+"\n"
+                list_data.append('"'+allDirArray[d][g]+'",\n')
+        list_data.append("];\n")
+        list_data.append("\n")
+    dirData += ''.join(list_data)
 
     return 
 
