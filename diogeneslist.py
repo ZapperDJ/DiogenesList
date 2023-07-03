@@ -10,15 +10,14 @@ genDate = datetime.datetime.now().strftime("%d/%m/%Y")
 genTime = datetime.datetime.now().strftime("%H:%M")
 appLink = "http://zapperdj.net"
 dirData = ""
-numFiles=0 
-numDirs=0 
-grandTotalSize=0
-linkFiles="false" # file linking not yet implemented
-
+numFiles = 0
+numDirs = 0
+grandTotalSize = 0
+linkFiles = "false"  # file linking not yet implemented
 
 
 # functions definition
-def generateDirArray(dirToScan):
+def generateDirArray(dirToScan, hiddenFiles=False):
     global dirData
     global numFiles
     global numDirs
@@ -29,42 +28,61 @@ def generateDirArray(dirToScan):
     dirIDsDictionary[dirToScan] = 0
     for currentDir, dirs, files in os.walk(dirToScan):
         for dir in dirs:
-            dirIDsDictionary[currentDir+'/'+dir] = i
+            dirIDsDictionary[currentDir + '/' + dir] = i
             i = i + 1
 
     # initilize array to hold all dir data, dimensioning it to hold the total number of dirs
-    allDirArray=[]
+    allDirArray = []
     for p in range(i):
         allDirArray.append(p)
 
     # traverse the directory tree     
     for currentDir, dirs, files in os.walk(dirToScan):
-        currentDirId=dirIDsDictionary[currentDir]
-        currentDirArray=[]  # array to hold all current dir data
+        currentDirId = dirIDsDictionary[currentDir]
+        currentDirArray = []  # array to hold all current dir data
         currentDirModifiedTime = datetime.datetime.fromtimestamp(os.path.getmtime(currentDir))
         currentDirModifiedTime = currentDirModifiedTime.strftime("%d/%m/%Y %H:%M:%S")
-        currentDirFixed = currentDir.replace("/","\\\\")    # replace / with \\ in the dir path (necessary for javascript functions to work properly
-        currentDirArray.append(currentDirFixed+'*0*'+currentDirModifiedTime)   # append directory info to currentDirArray 
+        currentDirFixed = currentDir.replace("/",
+                                             "\\\\")  # replace / with \\ in the dir path (necessary for javascript functions to work properly
+        currentDirArray.append(
+            currentDirFixed + '*0*' + currentDirModifiedTime)  # append directory info to currentDirArray
         totalSize = 0
         for file in files:
-            numFiles = numFiles + 1
-            fileSize = getsize(currentDir+'/'+file)
-            totalSize = totalSize + fileSize
-            grandTotalSize = grandTotalSize + fileSize
-            fileModifiedTime = datetime.datetime.fromtimestamp(os.path.getmtime(currentDir+'/'+file))
-            fileModifiedTime = fileModifiedTime.strftime("%d/%m/%Y %H:%M:%S")
-            currentDirArray.append(file+'*'+str(fileSize)+'*'+fileModifiedTime)   # append file info to currentDirArray
-        currentDirArray.append(totalSize)   # append total file size to currentDirArray
+            if hiddenFiles:
+                numFiles = numFiles + 1
+                fileSize = getsize(currentDir + '/' + file)
+                totalSize = totalSize + fileSize
+                grandTotalSize = grandTotalSize + fileSize
+                fileModifiedTime = datetime.datetime.fromtimestamp(os.path.getmtime(currentDir + '/' + file))
+                fileModifiedTime = fileModifiedTime.strftime("%d/%m/%Y %H:%M:%S")
+                currentDirArray.append(
+                    file + '*' + str(fileSize) + '*' + fileModifiedTime)  # append file info to currentDirArray
+            else:
+                if file[0] != '.':  # ignore hidden files
+                    numFiles = numFiles + 1
+                    fileSize = getsize(currentDir + '/' + file)
+                    totalSize = totalSize + fileSize
+                    grandTotalSize = grandTotalSize + fileSize
+                    fileModifiedTime = datetime.datetime.fromtimestamp(os.path.getmtime(currentDir + '/' + file))
+                    fileModifiedTime = fileModifiedTime.strftime("%d/%m/%Y %H:%M:%S")
+                    currentDirArray.append(
+                        file + '*' + str(fileSize) + '*' + fileModifiedTime)  # append file info to currentDirArray
+        currentDirArray.append(totalSize)  # append total file size to currentDirArray
         # create the list of directory IDs correspondent to the subdirs present on the current directory
         # this acts as a list of links to the subdirectories on the javascript code
         dirLinks = ''
         for dir in dirs:
-            numDirs = numDirs + 1
-            dirLinks = dirLinks + str(dirIDsDictionary[currentDir+'/'+dir]) + '*'
-        dirLinks = dirLinks[:-1]    # remove last *
+            if hiddenFiles:
+                numDirs = numDirs + 1
+                dirLinks = dirLinks + str(dirIDsDictionary[currentDir + '/' + dir]) + '*'
+            else:
+                if dir[0] != '.':
+                    numDirs = numDirs + 1
+                    dirLinks = dirLinks + str(dirIDsDictionary[currentDir + '/' + dir]) + '*'
+        dirLinks = dirLinks[:-1]  # remove last *
         currentDirArray.append(dirLinks)
-        allDirArray[currentDirId]=currentDirArray   # store currentDirArray on the correspondent position of allDirArray
-
+        allDirArray[
+            currentDirId] = currentDirArray  # store currentDirArray on the correspondent position of allDirArray
 
     # from allDirArray, generate the text to replace [DIR DATA] on HTML file
     #
@@ -83,20 +101,20 @@ def generateDirArray(dirToScan):
         list_data.append("dirs[" + str(d) + "] = [\n")
         for g in range(len(allDirArray[d])):
             if type(allDirArray[d][g]) == int:
-                list_data.append(str(allDirArray[d][g])+",\n")
+                list_data.append(str(allDirArray[d][g]) + ",\n")
             else:
-                list_data.append('"'+allDirArray[d][g]+'",\n')
+                list_data.append('"' + allDirArray[d][g] + '",\n')
         list_data.append("];\n")
         list_data.append("\n")
     dirData += ''.join(list_data)
 
-    return 
+    return
 
 
-
-def generateHTML(dirData,appName,appVer,genDate,genTime,title,appLink,numFiles,numDirs,grandTotalSize,linkFiles):
+def generateHTML(dirData, appName, appVer, genDate, genTime, title, appLink, numFiles, numDirs, grandTotalSize,
+                 linkFiles):
     templateFile = open('template.html', 'r')
-    outputFile = open(title+'.html', 'w')
+    outputFile = open(title + '.html', 'w')
     for line in templateFile:
         modifiedLine = line
         modifiedLine = modifiedLine.replace('[DIR DATA]', dirData)
@@ -113,22 +131,19 @@ def generateHTML(dirData,appName,appVer,genDate,genTime,title,appLink,numFiles,n
         outputFile.write(modifiedLine)
     templateFile.close()
     outputFile.close()
-    
-
-
 
 
 # main program start point
-if len(sys.argv) < 3:    # check if required arguments are supplied
-    print ("Missing arguments. This tool should be used as follows:")
-    print ("    diogeneslist pathToIndex outputFileName")
+if len(sys.argv) < 3:  # check if required arguments are supplied
+    print("Missing arguments. This tool should be used as follows:")
+    print("    diogeneslist pathToIndex outputFileName")
 else:
     pathToIndex = str(sys.argv[1])
     title = str(sys.argv[2])
-    if os.path.exists(pathToIndex):    # check if the specified directory exists
-        generateDirArray(pathToIndex)
-        generateHTML(dirData,appName,appVer,genDate,genTime,title,appLink,numFiles,numDirs,grandTotalSize,linkFiles)
+    hiddenFiles = False if len(sys.argv) < 4 else sys.argv[3]
+    if os.path.exists(pathToIndex):  # check if the specified directory exists
+        generateDirArray(pathToIndex, hiddenFiles)
+        generateHTML(dirData, appName, appVer, genDate, genTime, title, appLink, numFiles, numDirs, grandTotalSize,
+                     linkFiles)
     else:
         print("The specified directory doesn't exist")
-
-
